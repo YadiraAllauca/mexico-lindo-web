@@ -1,0 +1,64 @@
+---
+import Layout from '../layouts/Layout.astro';
+import logo from '../assets/ml_logo.jpg';
+
+// Esta página existe para el enlace del mensaje de bienvenida de WhatsApp.
+// Quien llega viene con datos móviles: nada de videos, galería ni portada.
+---
+
+<Layout
+	bare
+	autoOpenForm
+	title="Cuéntanos de tu evento — Mariachi México Lindo"
+	description="Cuéntanos fecha, hora y lugar. Te respondemos por WhatsApp con el precio."
+>
+	<div class="cotizar">
+		<img src={logo.src} alt="Mariachi México Lindo" width="96" height="96" />
+		<h1>Cuéntanos de tu evento</h1>
+		<p>Llena lo que puedas y te respondemos por WhatsApp.</p>
+		<a href="/" class="cotizar-volver">Ver el sitio completo</a>
+	</div>
+</Layout>
+
+<style>
+	/* Se ve un instante antes de que el diálogo monte, y queda de fondo detrás
+	   del backdrop. Sin JavaScript, es lo único que le queda al visitante. */
+	.cotizar {
+		min-height: 100dvh;
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		gap: 0.9rem;
+		padding: 2rem 1.5rem;
+		text-align: center;
+		background: var(--tinta);
+		color: rgba(236, 238, 230, 0.72);
+	}
+
+	.cotizar img {
+		width: 96px;
+		height: 96px;
+		border-radius: 50%;
+		object-fit: cover;
+	}
+
+	.cotizar h1 {
+		font-size: clamp(1.7rem, 1.2rem + 2.2vw, 2.4rem);
+		color: var(--papel-alto);
+	}
+
+	.cotizar p {
+		max-width: 32ch;
+		line-height: 1.6;
+	}
+
+	.cotizar-volver {
+		margin-top: 0.4rem;
+		font-family: var(--display);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--mono);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+	}
+</style>

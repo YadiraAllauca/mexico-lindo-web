@@ -2,12 +2,17 @@
 interface Props {
 	defaultMessage?: string;
 	locations?: string[];
+	/** Destino cuando el formulario se abre solo, sin pasar por un enlace. */
+	whatsappNumber?: string;
 }
 
 const {
 	defaultMessage = "Buen día. Me interesa conocer más sobre los costos de la presentación de mariachi para un evento.",
 	locations = ['Ambato centro', 'Pelileo centro', 'Baños centro', 'Patate centro', 'Píllaro centro'],
+	whatsappNumber = "593992084976",
 } = Astro.props;
+
+const fallbackNumber = whatsappNumber.replace(/\D/g, '');
 
 // Ambato, y los límites del Ecuador continental para que el mapa no se salga del país
 const mapConfig = {
@@ -18,7 +23,7 @@ const mapConfig = {
 };
 ---
 
-<dialog id="whatsapp-modal" class="wa-modal" aria-labelledby="wa-modal-title" data-default-message={defaultMessage}>
+<dialog id="whatsapp-modal" class="wa-modal" aria-labelledby="wa-modal-title" data-default-message={defaultMessage} data-number={fallbackNumber}>
 	<form class="wa-modal-form" id="wa-modal-form" novalidate>
 		<button type="button" class="wa-modal-close" id="wa-modal-close" aria-label="Cerrar">&times;</button>
 
@@ -27,7 +32,7 @@ const mapConfig = {
 				<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
 			</svg>
 			<h2 class="wa-modal-title" id="wa-modal-title">Cuéntanos de tu evento</h2>
-			<p class="wa-modal-subtitle">Todo es opcional, pero con estos datos la cotización sale exacta.</p>
+			<p class="wa-modal-subtitle">Todo es opcional. Con esto armamos tu mensaje y te respondemos con el precio.</p>
 		</div>
 
 		<div class="wa-field">
@@ -63,7 +68,7 @@ const mapConfig = {
 					</svg>
 					<span class="wa-place-text">
 						<span class="wa-place-title" id="wa-place-title">Marca el punto en el mapa</span>
-						<span class="wa-place-sub" id="wa-place-sub">Ajusta el costo del transporte.</span>
+						<span class="wa-place-sub" id="wa-place-sub">El precio incluye transporte.</span>
 					</span>
 					<svg class="wa-place-chevron" viewBox="0 0 24 24" aria-hidden="true">
 						<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -607,6 +612,10 @@ const mapConfig = {
 		const placeSub = document.getElementById('wa-place-sub') as HTMLSpanElement;
 
 		const defaultMessage = modal.dataset.defaultMessage || '';
+		const fallbackNumber = modal.dataset.number || '';
+		const autoOpen = document.body.dataset.waAutoopen === 'true';
+		// Al enviar salimos de la página a propósito: el cierre no debe redirigir encima
+		let leaving = false;
 		const mapConfig = JSON.parse(mapPanel.dataset.map || '{}');
 		const HELP_IDLE = mapHelp.textContent || '';
 		const PLACE_TITLE_IDLE = placeTitle.textContent || '';
@@ -662,8 +671,12 @@ const mapConfig = {
 
 		function send(includeDetails: boolean) {
 			const url = `https://wa.me/${currentNumber}?text=${encodeURIComponent(buildMessage(includeDetails))}`;
+			leaving = true;
 			modal!.close();
-			window.open(url, '_blank', 'noopener');
+			// Dentro del navegador de WhatsApp o Instagram, window.open devuelve null
+			// y el botón no haría nada: ahí hay que navegar la propia pestaña.
+			const opened = window.open(url, '_blank', 'noopener');
+			if (!opened) window.location.href = url;
 		}
 
 		function mapsLink(point: { lat: number; lng: number }): string {
@@ -850,11 +863,23 @@ const mapConfig = {
 
 		skipBtn.addEventListener('click', () => send(false));
 		closeBtn.addEventListener('click', () => modal.close());
-		modal.addEventListener('close', resetForm);
+		modal.addEventListener('close', () => {
+			resetForm();
+			// En /cotizar no hay web detrás: cerrar debe llevar a algún lado
+			if (autoOpen && !leaving) window.location.href = '/';
+		});
 
 		modal.addEventListener('click', (event) => {
 			if (event.target === modal) modal.close();
 		});
+
+		function openModal(number: string, message: string) {
+			if (!number || modal!.open) return;
+			currentNumber = number;
+			currentBaseMessage = message;
+			resetForm();
+			modal!.showModal();
+		}
 
 		document.querySelectorAll<HTMLAnchorElement>('a[data-whatsapp]').forEach((link) => {
 			link.addEventListener('click', (event) => {
@@ -869,11 +894,18 @@ const mapConfig = {
 				if (!number) return;
 
 				event.preventDefault();
-				currentNumber = number;
-				currentBaseMessage = (parsed.searchParams.get('text') || defaultMessage).trim();
-				resetForm();
-				modal.showModal();
+				openModal(number, (parsed.searchParams.get('text') || defaultMessage).trim());
 			});
+		});
+
+		// Quien llega desde WhatsApp o Instagram cae directo en el formulario,
+		// sea por /cotizar (autoOpen) o por un enlace a la portada con #cotizar.
+		if (autoOpen || window.location.hash === '#cotizar') {
+			openModal(fallbackNumber, defaultMessage);
+		}
+
+		window.addEventListener('hashchange', () => {
+			if (window.location.hash === '#cotizar') openModal(fallbackNumber, defaultMessage);
 		});
 	}
 </script>
