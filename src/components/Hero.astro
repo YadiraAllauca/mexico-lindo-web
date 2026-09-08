@@ -28,6 +28,7 @@ const secondLine = restWords.join(' ');
 				<span class="hero-title-line">{firstWord}</span>
 				{secondLine && <span class="hero-title-line">{secondLine}</span>}
 			</h1>
+			<p class="hero-place">Ambato, Ecuador</p>
 			<p class="hero-subtitle">Música mexicana para tus mejores momentos</p>
 			<div class="hero-cta">
 				<a href={whatsappUrl} target="_blank" rel="noopener noreferrer" data-whatsapp class="hero-whatsapp">
@@ -85,8 +86,20 @@ const secondLine = restWords.join(' ');
 
 	.hero-title-line { display: block; }
 
+	/* La ciudad es lo segundo que se lee, pegada al nombre: responde
+	   "¿están cerca de mí?" sin que haga falta bajar. */
+	.hero-place {
+		margin-top: clamp(0.8rem, 2vw, 1.15rem);
+		font-family: var(--display);
+		font-weight: 600;
+		font-variation-settings: 'wdth' 112;
+		font-size: clamp(1rem, 0.9rem + 0.45vw, 1.25rem);
+		letter-spacing: 0.01em;
+		color: var(--mono);
+	}
+
 	.hero-subtitle {
-		margin-top: clamp(1.5rem, 3vw, 2.2rem);
+		margin-top: clamp(0.5rem, 1.5vw, 0.85rem);
 		font-size: clamp(1.05rem, 0.9rem + 0.6vw, 1.35rem);
 		line-height: 1.5;
 		color: rgba(236, 238, 230, 0.86);
@@ -186,6 +199,7 @@ const secondLine = restWords.join(' ');
 
 	/* Una sola entrada orquestada al cargar la página */
 	.hero-title-line,
+	.hero-place,
 	.hero-subtitle,
 	.hero-whatsapp,
 	.hero-videos,
@@ -196,7 +210,8 @@ const secondLine = restWords.join(' ');
 	.hero-mark img { animation-delay: 0.05s; }
 	.hero-title-line:nth-child(1) { animation-delay: 0.12s; }
 	.hero-title-line:nth-child(2) { animation-delay: 0.2s; }
-	.hero-subtitle { animation-delay: 0.38s; }
+	.hero-place { animation-delay: 0.28s; }
+	.hero-subtitle { animation-delay: 0.36s; }
 	.hero-whatsapp { animation-delay: 0.46s; }
 	.hero-videos { animation-delay: 0.54s; }
 
