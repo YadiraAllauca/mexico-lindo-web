@@ -686,10 +686,16 @@ const mapConfig = {
 			const url = `https://wa.me/${currentNumber}?text=${encodeURIComponent(buildMessage(includeDetails))}`;
 			leaving = true;
 			modal!.close();
-			// Dentro del navegador de WhatsApp o Instagram, window.open devuelve null
-			// y el botón no haría nada: ahí hay que navegar la propia pestaña.
-			const opened = window.open(url, '_blank', 'noopener');
-			if (!opened) window.location.href = url;
+			// Sin 'noopener': con esa opción window.open devuelve null por spec, así
+			// que el fallback se disparaba siempre y WhatsApp se abría dos veces.
+			// El null real es el de los navegadores embebidos (Instagram, WhatsApp),
+			// donde no hay pestaña nueva y hay que navegar la propia.
+			const opened = window.open(url, '_blank');
+			if (opened) {
+				try { opened.opener = null; } catch { /* algunos webviews no lo permiten */ }
+			} else {
+				window.location.href = url;
+			}
 		}
 
 		function mapsLink(point: { lat: number; lng: number }): string {
@@ -884,8 +890,17 @@ const mapConfig = {
 				delete modal!.dataset.pinned;
 				return;
 			}
-			modal!.style.setProperty('--wa-vv-top', `${viewport.offsetTop}px`);
-			modal!.style.setProperty('--wa-vv-height', `${viewport.height}px`);
+			const top = viewport.offsetTop;
+			const height = viewport.height;
+			// Los navegadores embebidos (Instagram, Facebook) a veces reportan un
+			// viewport que no corresponde a lo que se ve. Si no es creíble, dejamos
+			// el centrado nativo del diálogo antes que anclarlo en un lugar absurdo.
+			if (!(height >= 240) || top < 0 || top > window.innerHeight) {
+				delete modal!.dataset.pinned;
+				return;
+			}
+			modal!.style.setProperty('--wa-vv-top', `${top}px`);
+			modal!.style.setProperty('--wa-vv-height', `${height}px`);
 			modal!.dataset.pinned = '';
 		}
 
