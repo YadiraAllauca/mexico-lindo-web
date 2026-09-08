@@ -129,6 +129,17 @@ const mapConfig = {
 		font-family: var(--lectura, Georgia, serif);
 	}
 
+	/* Con el teclado abierto anclamos el diálogo al viewport visible: el
+	   layout viewport no se encoge, así que centrado se iría debajo del teclado. */
+	.wa-modal[data-kb='open'] {
+		margin: 0;
+		top: var(--wa-kb-top, 0px);
+		bottom: auto;
+		left: 50%;
+		transform: translateX(-50%);
+		max-height: var(--wa-kb-height, 100dvh);
+	}
+
 	.wa-modal::backdrop {
 		background: rgba(23, 19, 15, 0.72);
 		backdrop-filter: blur(3px);
@@ -861,9 +872,43 @@ const mapConfig = {
 			send(true);
 		});
 
+		// El teclado del celular encoge el viewport visible pero no el de layout,
+		// así que el diálogo centrado queda tapado justo donde se está escribiendo.
+		const viewport = window.visualViewport;
+
+		function syncKeyboard() {
+			if (!viewport) return;
+			const hiddenByKeyboard = window.innerHeight - viewport.height - viewport.offsetTop;
+			if (modal!.open && hiddenByKeyboard > 120) {
+				modal!.style.setProperty('--wa-kb-top', `${viewport.offsetTop}px`);
+				modal!.style.setProperty('--wa-kb-height', `${viewport.height}px`);
+				modal!.dataset.kb = 'open';
+			} else {
+				delete modal!.dataset.kb;
+			}
+		}
+
+		if (viewport) {
+			viewport.addEventListener('resize', syncKeyboard);
+			viewport.addEventListener('scroll', syncKeyboard);
+		}
+
+		form.addEventListener('focusin', (event) => {
+			const field = event.target;
+			if (!(field instanceof HTMLElement)) return;
+			// El teclado sube después del focus: esperamos a que el viewport se reacomode
+			window.setTimeout(() => {
+				syncKeyboard();
+				field.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+			}, 300);
+		});
+
+		form.addEventListener('focusout', () => window.setTimeout(syncKeyboard, 150));
+
 		skipBtn.addEventListener('click', () => send(false));
 		closeBtn.addEventListener('click', () => modal.close());
 		modal.addEventListener('close', () => {
+			delete modal.dataset.kb;
 			resetForm();
 			// En /cotizar no hay web detrás: cerrar debe llevar a algún lado
 			if (autoOpen && !leaving) window.location.href = '/';
