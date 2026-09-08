@@ -17,7 +17,7 @@ const videos = [
 		</div>
 		<div class="gallery-grid">
 			{videos.map((video) => (
-				<article class="gallery-item" style={`aspect-ratio: ${video.width} / ${video.height};`}>
+				<article class="gallery-item" style={`--clip-ar: ${video.width} / ${video.height};`}>
 					<video
 						class="gallery-video"
 						src={`/videos/${video.id}.mp4`}
@@ -151,6 +151,7 @@ const videos = [
 
 	.gallery-item {
 		position: relative;
+		aspect-ratio: var(--clip-ar);
 		break-inside: avoid;
 		margin-bottom: 2rem;
 		overflow: hidden;
@@ -317,20 +318,58 @@ const videos = [
 
 	@media (max-width: 768px) {
 		.gallery {
-			padding: 4rem 1rem;
+			padding: 3rem 1rem;
+		}
+
+		.section-header {
+			margin-bottom: 2rem;
 		}
 
 		.section-title {
 			font-size: 2rem;
 		}
 
+		/* El masonry reparte por altura y con seis proporciones distintas deja
+		   una columna corta y un hueco grande. En móvil se cambia por una
+		   retícula pareja: los clips caen en filas alineadas, sin huecos. */
 		.gallery-grid {
-			columns: 1;
-			column-gap: 1.5rem;
+			columns: auto;
+			column-count: initial;
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 0.75rem;
 		}
 
 		.gallery-item {
-			margin-bottom: 1.5rem;
+			margin-bottom: 0;
+			aspect-ratio: 1 / 1;
+			border-width: 1px;
+		}
+
+		/* La miniatura recorta para llenar el cuadro; a pantalla completa la
+		   regla de :fullscreen devuelve el encuadre entero. */
+		.gallery-video {
+			object-fit: cover;
+		}
+
+		.play-icon {
+			width: 48px;
+			height: 48px;
+		}
+
+		.play-icon svg {
+			width: 22px;
+			height: 22px;
+		}
+
+		.download-button {
+			width: 36px;
+			height: 36px;
+		}
+
+		.download-button svg {
+			width: 17px;
+			height: 17px;
 		}
 	}
 

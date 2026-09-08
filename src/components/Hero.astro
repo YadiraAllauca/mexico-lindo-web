@@ -94,7 +94,7 @@ const secondLine = restWords.join(' ');
 	}
 
 	.hero-cta {
-		margin-top: clamp(1.75rem, 3vw, 2.4rem);
+		margin-top: clamp(1.35rem, 3vw, 2.4rem);
 		display: flex;
 		flex-direction: column;
 		align-items: stretch;
@@ -207,13 +207,16 @@ const secondLine = restWords.join(' ');
 
 	@media (max-width: 860px) {
 		.hero {
+			/* Sin 100svh: el contenido apilado ocupa menos que la pantalla y
+			   forzar la altura dejaba un vacío grande bajo los botones. */
+			min-height: auto;
 			align-items: flex-start;
-			padding-block: calc(var(--barra) + 1.5rem) clamp(3.5rem, 10vw, 5rem);
+			padding-block: calc(var(--barra) + 1.5rem) clamp(2.5rem, 8vw, 5rem);
 		}
 
 		.hero-inner {
 			grid-template-columns: 1fr;
-			gap: 2rem;
+			gap: 1.5rem;
 		}
 
 		.hero-mark {
@@ -222,7 +225,7 @@ const secondLine = restWords.join(' ');
 		}
 
 		.hero-mark img {
-			width: min(64%, 280px);
+			width: min(52%, 220px);
 		}
 
 		.hero-subtitle { max-width: 34ch; }

@@ -58,17 +58,47 @@ const mapConfig = {
 		<p class="wa-hint">Mientras más precisa sea la dirección, más exacta será la cotización: el precio incluye transporte.</p>
 
 		<div class="wa-field wa-map-field">
-			<button type="button" class="wa-map-toggle" id="wa-map-toggle" aria-expanded="false" aria-controls="wa-map-panel">
-				Elegir punto en el mapa
-			</button>
+			<div class="wa-place-bar" id="wa-place-bar">
+				<button type="button" class="wa-place-row" id="wa-map-toggle" aria-expanded="false" aria-controls="wa-map-panel">
+					<svg class="wa-place-pin" viewBox="0 0 24 24" aria-hidden="true">
+						<path fill="currentColor" fill-rule="evenodd" d="M12 22s7-6.13 7-11a7 7 0 1 0-14 0c0 4.87 7 11 7 11zM12 8a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 1 0 0-5.2z"/>
+					</svg>
+					<span class="wa-place-text">
+						<span class="wa-place-title" id="wa-place-title">Marca el punto en el mapa</span>
+						<span class="wa-place-sub" id="wa-place-sub">Ubica el lugar exacto del evento.</span>
+					</span>
+					<svg class="wa-place-chevron" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+				<button type="button" class="wa-place-clear" id="wa-map-clear" hidden aria-label="Quitar el punto marcado">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+				</button>
+			</div>
 
 			<div class="wa-map-panel" id="wa-map-panel" hidden data-map={JSON.stringify(mapConfig)}>
-				<p class="wa-map-help" id="wa-map-help">Toca el mapa para marcar el lugar exacto del evento.</p>
-				<div class="wa-map" id="wa-map"></div>
-				<div class="wa-map-actions">
-					<button type="button" class="wa-map-link" id="wa-map-locate">Usar mi ubicación actual</button>
-					<button type="button" class="wa-map-link" id="wa-map-clear" hidden>Quitar el punto</button>
+				<div class="wa-map-stage" id="wa-map-stage">
+					<div class="wa-map" id="wa-map"></div>
+
+					<div class="wa-map-crosshair" aria-hidden="true">
+						<svg class="wa-map-crosshair-pin" viewBox="0 0 24 24">
+							<path fill="currentColor" d="M12 22s7-6.13 7-11a7 7 0 1 0-14 0c0 4.87 7 11 7 11z"/>
+							<circle class="wa-map-crosshair-dot" cx="12" cy="10.6" r="2.6"/>
+						</svg>
+						<span class="wa-map-crosshair-base"></span>
+					</div>
+
+					<button type="button" class="wa-map-locate" id="wa-map-locate" aria-label="Centrar el mapa en mi ubicación">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<circle cx="12" cy="12" r="3.2" fill="currentColor"/>
+							<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="1.7"/>
+							<path d="M12 1.6v3.2M12 19.2v3.2M1.6 12h3.2M19.2 12h3.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+						</svg>
+					</button>
 				</div>
+
+				<p class="wa-map-help" id="wa-map-help">Mueve el mapa hasta centrar el lugar del evento.</p>
+				<button type="button" class="wa-map-confirm" id="wa-map-confirm">Usar esta ubicación</button>
 			</div>
 		</div>
 
@@ -199,71 +229,287 @@ const mapConfig = {
 		margin-top: 1.35rem;
 	}
 
-	.wa-map-toggle {
-		width: 100%;
-		padding: 0.8rem 0.9rem;
-		background: transparent;
-		border: 1px dashed var(--linea, rgba(23, 19, 15, 0.14));
+	/* Fila de acción como la de cualquier app: icono, dos líneas de texto y chevron.
+	   El borde punteado anterior se leía como campo deshabilitado. */
+	.wa-place-bar {
+		display: flex;
+		align-items: stretch;
+		gap: 0.4rem;
+	}
+
+	.wa-place-row {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		padding: 0.75rem 0.85rem;
+		background: var(--papel, #ECEEE6);
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
 		border-radius: 3px;
+		text-align: left;
+		cursor: pointer;
+		transition: border-color 0.2s ease, background-color 0.2s ease;
+	}
+
+	.wa-place-row:hover:not(:disabled) {
+		border-color: var(--tinta, #17130F);
+	}
+
+	.wa-place-row:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+
+	.wa-place-pin {
+		width: 22px;
+		height: 22px;
+		flex-shrink: 0;
+		color: var(--texto-tenue, #6B6760);
+		transition: color 0.2s ease;
+	}
+
+	.wa-place-row:hover:not(:disabled) .wa-place-pin {
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-place-text {
+		display: grid;
+		gap: 0.1rem;
+		min-width: 0;
+	}
+
+	.wa-place-title {
 		font-family: var(--display, Arial, sans-serif);
-		font-size: 0.85rem;
-		font-weight: 600;
+		font-size: 0.92rem;
+		font-weight: 700;
+		line-height: 1.25;
+		color: var(--tinta, #17130F);
+	}
+
+	.wa-place-sub {
+		font-size: 0.84rem;
+		line-height: 1.35;
+		color: var(--texto-tenue, #6B6760);
+	}
+
+	.wa-place-chevron {
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+		margin-left: auto;
+		color: var(--texto-tenue, #6B6760);
+		transition: transform 0.2s ease;
+	}
+
+	.wa-place-row[aria-expanded='true'] .wa-place-chevron {
+		transform: rotate(90deg);
+	}
+
+	/* Confirmado: el pin se enciende y la segunda línea pasa a ser el dato */
+	.wa-place-bar[data-state='picked'] .wa-place-row {
+		background: var(--papel-alto, #F5F6F1);
+		border-color: var(--mono, #E85D24);
+	}
+
+	.wa-place-bar[data-state='picked'] .wa-place-pin {
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-place-bar[data-state='picked'] .wa-place-sub {
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.8rem;
+		font-variant-numeric: tabular-nums;
+		color: var(--texto, #33302B);
+	}
+
+	.wa-place-clear {
+		flex-shrink: 0;
+		width: 46px;
+		display: grid;
+		place-items: center;
+		background: transparent;
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 3px;
 		color: var(--texto-tenue, #6B6760);
 		cursor: pointer;
 		transition: border-color 0.2s ease, color 0.2s ease;
 	}
 
-	.wa-map-toggle:hover,
-	.wa-map-toggle[aria-expanded='true'] {
-		border-color: var(--mono, #E85D24);
-		color: var(--mono, #E85D24);
+	.wa-place-clear svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	.wa-place-clear:hover {
+		border-color: var(--tinta, #17130F);
+		color: var(--tinta, #17130F);
 	}
 
 	.wa-map-panel {
-		margin-top: 0.85rem;
-	}
-
-	.wa-map-help {
-		font-size: 0.85rem;
-		line-height: 1.45;
-		color: var(--texto-tenue, #6B6760);
-		margin: 0 0 0.6rem 0;
-	}
-
-	.wa-map {
-		height: 240px;
-		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
-		background: var(--papel, #ECEEE6);
-	}
-
-	.wa-map-actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem;
 		margin-top: 0.6rem;
 	}
 
-	.wa-map-link {
-		background: none;
-		border: none;
-		padding: 0;
-		font-family: var(--display, Arial, sans-serif);
-		font-size: 0.82rem;
-		font-weight: 600;
-		color: var(--mono, #E85D24);
-		cursor: pointer;
-		text-decoration: underline;
-		text-underline-offset: 3px;
+	/* El mapa se mueve debajo de un pin fijo, como en las apps de transporte */
+	.wa-map-stage {
+		position: relative;
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 3px;
+		overflow: hidden;
 	}
 
-	.wa-map-link:hover {
+	.wa-map {
+		height: 260px;
+		background: var(--papel, #ECEEE6);
+	}
+
+	/* El borde inferior de este bloque cae en el centro exacto del mapa */
+	.wa-map-crosshair {
+		position: absolute;
+		left: 50%;
+		bottom: 50%;
+		transform: translateX(-50%);
+		display: grid;
+		justify-items: center;
+		pointer-events: none;
+		z-index: 500;
+	}
+
+	.wa-map-crosshair-pin {
+		width: 40px;
+		height: 40px;
+		margin-bottom: -3px;
+		color: var(--mono, #E85D24);
+		filter: drop-shadow(0 3px 5px rgba(23, 19, 15, 0.35));
+		transition: transform 0.18s ease;
+	}
+
+	.wa-map-crosshair-dot {
+		fill: #fff;
+	}
+
+	/* El suelo marca el punto real y da la sensación de altura al arrastrar */
+	.wa-map-crosshair-base {
+		width: 10px;
+		height: 4px;
+		border-radius: 50%;
+		background: rgba(23, 19, 15, 0.5);
+		transition: transform 0.18s ease, opacity 0.18s ease;
+	}
+
+	.wa-map-stage.is-dragging .wa-map-crosshair-pin {
+		transform: translateY(-7px);
+	}
+
+	.wa-map-stage.is-dragging .wa-map-crosshair-base {
+		transform: scale(0.65);
+		opacity: 0.5;
+	}
+
+	/* La mira flotante: el signo que todo el mundo ya reconoce como "mi ubicación" */
+	.wa-map-locate {
+		position: absolute;
+		right: 10px;
+		bottom: 10px;
+		z-index: 600;
+		width: 44px;
+		height: 44px;
+		display: grid;
+		place-items: center;
+		background: var(--papel-alto, #F5F6F1);
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 50%;
+		color: var(--tinta, #17130F);
+		cursor: pointer;
+		box-shadow: 0 2px 10px rgba(23, 19, 15, 0.28);
+		transition: color 0.2s ease, background-color 0.2s ease;
+	}
+
+	.wa-map-locate svg {
+		width: 21px;
+		height: 21px;
+	}
+
+	.wa-map-locate:hover:not(:disabled) {
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-map-locate:disabled {
+		cursor: progress;
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-map-locate.is-busy svg {
+		animation: wa-locate-spin 1.1s linear infinite;
+	}
+
+	@keyframes wa-locate-spin {
+		to { transform: rotate(360deg); }
+	}
+
+	.wa-map-help {
+		margin: 0.6rem 0;
+		font-size: 0.85rem;
+		line-height: 1.45;
+		text-align: center;
+		color: var(--texto-tenue, #6B6760);
+	}
+
+	.wa-map-help[data-tone='error'] {
 		color: var(--mono-hondo, #C2481A);
 	}
 
-	.wa-map-link:disabled {
-		color: var(--texto-tenue, #6B6760);
-		cursor: default;
-		text-decoration: none;
+	.wa-map-confirm {
+		width: 100%;
+		padding: 0.8rem 1rem;
+		background: var(--tinta, #17130F);
+		color: var(--papel-alto, #F5F6F1);
+		border: 1px solid transparent;
+		border-radius: 3px;
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.8rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+
+	.wa-map-confirm:hover {
+		background: var(--mono, #E85D24);
+	}
+
+	/* Los controles de Leaflet se generan en runtime: quedan fuera del scope */
+	.wa-map :global(.leaflet-control-zoom) {
+		border: none;
+		box-shadow: 0 2px 10px rgba(23, 19, 15, 0.22);
+	}
+
+	.wa-map :global(.leaflet-control-zoom a) {
+		width: 32px;
+		height: 32px;
+		line-height: 32px;
+		border-radius: 0;
+		color: var(--tinta, #17130F);
+		background: var(--papel-alto, #F5F6F1);
+		border-bottom-color: var(--linea, rgba(23, 19, 15, 0.14));
+	}
+
+	.wa-map :global(.leaflet-control-attribution) {
+		background: rgba(245, 246, 241, 0.82);
+		font-size: 0.62rem;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.wa-map-crosshair-pin,
+		.wa-map-crosshair-base,
+		.wa-place-chevron {
+			transition: none;
+		}
+
+		.wa-map-locate.is-busy svg {
+			animation: none;
+		}
 	}
 
 	.wa-modal-actions {
@@ -333,20 +579,27 @@ const mapConfig = {
 		const skipBtn = document.getElementById('wa-modal-skip') as HTMLButtonElement;
 		const mapToggle = document.getElementById('wa-map-toggle') as HTMLButtonElement;
 		const mapPanel = document.getElementById('wa-map-panel') as HTMLDivElement;
+		const mapStage = document.getElementById('wa-map-stage') as HTMLDivElement;
 		const mapEl = document.getElementById('wa-map') as HTMLDivElement;
 		const mapHelp = document.getElementById('wa-map-help') as HTMLParagraphElement;
 		const locateBtn = document.getElementById('wa-map-locate') as HTMLButtonElement;
 		const clearBtn = document.getElementById('wa-map-clear') as HTMLButtonElement;
+		const confirmBtn = document.getElementById('wa-map-confirm') as HTMLButtonElement;
+		const placeBar = document.getElementById('wa-place-bar') as HTMLDivElement;
+		const placeTitle = document.getElementById('wa-place-title') as HTMLSpanElement;
+		const placeSub = document.getElementById('wa-place-sub') as HTMLSpanElement;
 
 		const defaultMessage = modal.dataset.defaultMessage || '';
 		const mapConfig = JSON.parse(mapPanel.dataset.map || '{}');
-		const helpText = mapHelp.textContent || '';
+		const HELP_IDLE = mapHelp.textContent || '';
+		const PLACE_TITLE_IDLE = placeTitle.textContent || '';
+		const PLACE_SUB_IDLE = placeSub.textContent || '';
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		let currentNumber = '';
 		let currentBaseMessage = defaultMessage;
 		let picked: { lat: number; lng: number } | null = null;
 		let map: any = null;
-		let marker: any = null;
 		let loadingMap = false;
 
 		function formatDate(value: string): string {
@@ -400,31 +653,39 @@ const mapConfig = {
 			return `https://maps.google.com/?q=${point.lat.toFixed(6)},${point.lng.toFixed(6)}`;
 		}
 
-		function setPoint(lat: number, lng: number, L: any) {
-			picked = { lat, lng };
-			if (marker) {
-				marker.setLatLng([lat, lng]);
+		// La fila de arriba es la que reporta el estado: sin punto invita, con punto confirma
+		function renderPlace() {
+			if (picked) {
+				placeBar.setAttribute('data-state', 'picked');
+				placeTitle.textContent = 'Punto marcado en el mapa';
+				placeSub.textContent = `${picked.lat.toFixed(5)}, ${picked.lng.toFixed(5)}`;
+				clearBtn.hidden = false;
 			} else {
-				marker = L.circleMarker([lat, lng], {
-					radius: 9,
-					color: '#ffffff',
-					weight: 3,
-					fillColor: '#E85D24',
-					fillOpacity: 1,
-				}).addTo(map);
+				placeBar.removeAttribute('data-state');
+				placeTitle.textContent = PLACE_TITLE_IDLE;
+				placeSub.textContent = PLACE_SUB_IDLE;
+				clearBtn.hidden = true;
 			}
-			clearBtn.hidden = false;
-			mapHelp.textContent = 'Punto marcado. Toca otro lugar del mapa para corregirlo.';
 		}
 
 		function clearPoint() {
 			picked = null;
-			if (marker) {
-				marker.remove();
-				marker = null;
+			renderPlace();
+			setHelp(HELP_IDLE);
+		}
+
+		function setHelp(text: string, tone?: 'error') {
+			mapHelp.textContent = text;
+			if (tone) {
+				mapHelp.setAttribute('data-tone', tone);
+			} else {
+				mapHelp.removeAttribute('data-tone');
 			}
-			clearBtn.hidden = true;
-			mapHelp.textContent = helpText;
+		}
+
+		function stopLocating() {
+			locateBtn.disabled = false;
+			locateBtn.classList.remove('is-busy');
 		}
 
 		function loadStylesheet(href: string): Promise<void> {
@@ -467,27 +728,29 @@ const mapConfig = {
 					attribution: '&copy; colaboradores de OpenStreetMap',
 				}).addTo(map);
 
-				map.on('click', (event: any) => setPoint(event.latlng.lat, event.latlng.lng, L));
+				// El pin va fijo al centro y se arrastra el mapa debajo; se eleva mientras se mueve
+				map.on('movestart zoomstart', () => mapStage.classList.add('is-dragging'));
+				map.on('moveend zoomend', () => mapStage.classList.remove('is-dragging'));
 
 				locateBtn.addEventListener('click', () => {
 					if (!navigator.geolocation) {
-						mapHelp.textContent = 'Tu navegador no permite compartir la ubicación. Marca el punto tocando el mapa.';
+						setHelp('Tu navegador no comparte la ubicación. Mueve el mapa para centrar el punto.', 'error');
 						return;
 					}
 
 					locateBtn.disabled = true;
-					mapHelp.textContent = 'Buscando tu ubicación…';
+					locateBtn.classList.add('is-busy');
+					setHelp('Buscando tu ubicación…');
 
 					navigator.geolocation.getCurrentPosition(
 						(position) => {
-							locateBtn.disabled = false;
-							const { latitude, longitude } = position.coords;
-							map.setView([latitude, longitude], 16);
-							setPoint(latitude, longitude, L);
+							stopLocating();
+							map.setView([position.coords.latitude, position.coords.longitude], 16);
+							setHelp('Te encontramos. Ajusta el mapa si hace falta y confirma.');
 						},
 						() => {
-							locateBtn.disabled = false;
-							mapHelp.textContent = 'No pudimos obtener tu ubicación. Marca el punto tocando el mapa.';
+							stopLocating();
+							setHelp('No pudimos obtener tu ubicación. Mueve el mapa para centrar el punto.', 'error');
 						},
 						{ enableHighAccuracy: true, timeout: 10000 }
 					);
@@ -495,7 +758,9 @@ const mapConfig = {
 			} catch {
 				mapPanel.hidden = true;
 				mapToggle.disabled = true;
-				mapToggle.textContent = 'El mapa no está disponible en este momento';
+				mapToggle.setAttribute('aria-expanded', 'false');
+				placeTitle.textContent = 'El mapa no está disponible';
+				placeSub.textContent = 'Escribe la dirección en el campo de arriba.';
 			} finally {
 				loadingMap = false;
 			}
@@ -504,7 +769,7 @@ const mapConfig = {
 		function closeMapPanel() {
 			mapPanel.hidden = true;
 			mapToggle.setAttribute('aria-expanded', 'false');
-			mapToggle.textContent = picked ? 'Ver el punto marcado en el mapa' : 'Elegir punto en el mapa';
+			stopLocating();
 		}
 
 		mapToggle.addEventListener('click', async () => {
@@ -515,10 +780,20 @@ const mapConfig = {
 
 			mapPanel.hidden = false;
 			mapToggle.setAttribute('aria-expanded', 'true');
-			mapToggle.textContent = 'Ocultar el mapa';
 			await ensureMap();
 			// El contenedor estaba oculto, así que Leaflet necesita volver a medirlo
 			map?.invalidateSize();
+			// Reabrir con un punto ya elegido debe mostrar ese punto, no Ambato centro
+			if (picked) map?.setView([picked.lat, picked.lng], 16);
+			mapPanel.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+		});
+
+		confirmBtn.addEventListener('click', () => {
+			if (!map) return;
+			const center = map.getCenter();
+			picked = { lat: center.lat, lng: center.lng };
+			renderPlace();
+			closeMapPanel();
 		});
 
 		clearBtn.addEventListener('click', clearPoint);

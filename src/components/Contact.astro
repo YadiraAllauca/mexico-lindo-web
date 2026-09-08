@@ -62,7 +62,7 @@ const social = [
 ---
 
 <section id="contacto" class="contact">
-	<div class="wrap">
+	<div class="wrap contact-wrap">
 		<div class="contact-top">
 			<div class="contact-head">
 				<h2 class="section-title">Contáctanos</h2>
@@ -137,7 +137,7 @@ const social = [
 	.contact-top {
 		display: grid;
 		grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-		gap: clamp(2rem, 5vw, 5rem);
+		gap: clamp(1.5rem, 5vw, 5rem);
 		align-items: start;
 	}
 
@@ -149,10 +149,10 @@ const social = [
 	}
 
 	.contact-details {
-		margin-top: clamp(3rem, 6vw, 5rem);
+		margin-top: clamp(2rem, 5vw, 5rem);
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: clamp(1.75rem, 3.5vw, 3rem);
+		gap: clamp(1.5rem, 3.5vw, 3rem);
 	}
 
 	/* Sin tarjetas ni sombras: basta un filete para separar */
@@ -200,7 +200,7 @@ const social = [
 	.contact-band {
 		display: block;
 		height: 22px;
-		margin-top: clamp(3.5rem, 7vw, 6rem);
+		margin-top: clamp(2.25rem, 6vw, 6rem);
 		background-color: var(--mono);
 		-webkit-mask-image: var(--greca);
 		mask-image: var(--greca);
@@ -212,10 +212,10 @@ const social = [
 	}
 
 	.contact-actions {
-		margin-top: clamp(2.5rem, 5vw, 3.5rem);
+		margin-top: clamp(1.75rem, 4vw, 3.5rem);
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
-		gap: clamp(2rem, 5vw, 4rem);
+		gap: clamp(1.75rem, 5vw, 4rem);
 		align-items: end;
 	}
 
@@ -324,7 +324,24 @@ const social = [
 		.contact-top,
 		.contact-actions {
 			grid-template-columns: 1fr;
-			gap: 1.75rem;
+			gap: 1.5rem;
+		}
+
+		/* En móvil las tarjetas empujaban el WhatsApp y el número muy abajo.
+		   La acción sube justo tras la intro; el detalle queda después. */
+		.contact-wrap {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.contact-top { order: 1; }
+		.contact-band { order: 2; }
+		.contact-actions { order: 3; }
+		.contact-details { order: 4; }
+
+		.contact-details {
+			margin-top: clamp(2rem, 5vw, 5rem);
+			padding-top: 0;
 		}
 
 		.contact-intro { max-width: 100%; }

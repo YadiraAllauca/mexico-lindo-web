@@ -8,7 +8,10 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" sizes="48x48" />
+		<link rel="icon" type="image/png" href="/favicon-32.png" sizes="32x32" />
+		<link rel="icon" type="image/png" href="/favicon-512.png" sizes="512x512" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content="Mariachi México Lindo - Música tradicional mexicana para tus mejores momentos" />
 		<meta name="theme-color" content="#17130F" />
@@ -53,7 +56,8 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 		--lectura: 'Source Serif 4', Georgia, 'Times New Roman', serif;
 
 		--barra: 68px;
-		--seccion: clamp(5rem, 9vw, 8.5rem);
+		/* El término vw casi no aporta en móvil: el piso es lo que recibe el teléfono. */
+		--seccion: clamp(3.25rem, 8vw, 8.5rem);
 
 		/* La greca del ala del sombrero, del propio logotipo */
 		--greca: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='27' viewBox='0 0 42 27'%3E%3Cpath d='M1.5 25.5V1.5h36v18H7.5v-12h24v6h-12' fill='none' stroke='%23000' stroke-width='3'/%3E%3C/svg%3E");
@@ -118,7 +122,7 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 	/* Encabezado de sección compartido */
 	.section-head {
 		max-width: 34ch;
-		margin-bottom: clamp(2.5rem, 5vw, 4rem);
+		margin-bottom: clamp(1.75rem, 4vw, 4rem);
 	}
 
 	.section-title {
@@ -137,8 +141,8 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 	.greca-rule {
 		display: block;
 		height: 22px;
-		width: 200px;
-		margin-top: 1.5rem;
+		width: min(200px, 52vw);
+		margin-top: clamp(1rem, 3vw, 1.5rem);
 		background-color: var(--mono);
 		-webkit-mask-image: var(--greca);
 		mask-image: var(--greca);
@@ -152,7 +156,7 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 		position: relative;
 		background: var(--tinta);
 		color: rgba(236, 238, 230, 0.7);
-		padding-block: clamp(2.5rem, 5vw, 3.5rem);
+		padding-block: clamp(2rem, 4vw, 3.5rem);
 	}
 
 	.greca-band {
@@ -191,7 +195,12 @@ import WhatsAppModal from '../components/WhatsAppModal.astro';
 	}
 
 	@media (max-width: 768px) {
-		.wrap { width: min(1120px, 100% - 2.5rem); }
+		:root { --barra: 56px; }
+		.wrap { width: min(1120px, 100% - 2.25rem); }
+	}
+
+	@media (max-width: 430px) {
+		.wrap { width: min(1120px, 100% - 1.75rem); }
 	}
 
 	@media (prefers-reduced-motion: reduce) {
