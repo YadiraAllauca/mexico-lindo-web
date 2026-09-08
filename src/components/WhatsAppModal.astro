@@ -129,15 +129,17 @@ const mapConfig = {
 		font-family: var(--lectura, Georgia, serif);
 	}
 
-	/* Con el teclado abierto anclamos el diálogo al viewport visible: el
-	   layout viewport no se encoge, así que centrado se iría debajo del teclado. */
-	.wa-modal[data-kb='open'] {
+	/* En celular anclamos el diálogo al viewport visible en vez de centrarlo: el
+	   viewport de layout no se encoge con el teclado, y el campo enfocado queda
+	   debajo de él. El formulario ya es más alto que la pantalla, así que fijarlo
+	   arriba no cambia nada de lo que se ve sin teclado. */
+	.wa-modal[data-pinned] {
 		margin: 0;
-		top: var(--wa-kb-top, 0px);
+		top: calc(var(--wa-vv-top, 0px) + 0.5rem);
 		bottom: auto;
 		left: 50%;
 		transform: translateX(-50%);
-		max-height: var(--wa-kb-height, 100dvh);
+		max-height: calc(var(--wa-vv-height, 100dvh) - 1rem);
 	}
 
 	.wa-modal::backdrop {
@@ -875,40 +877,38 @@ const mapConfig = {
 		// El teclado del celular encoge el viewport visible pero no el de layout,
 		// así que el diálogo centrado queda tapado justo donde se está escribiendo.
 		const viewport = window.visualViewport;
+		const smallScreen = window.matchMedia('(max-width: 900px)');
 
-		function syncKeyboard() {
-			if (!viewport) return;
-			const hiddenByKeyboard = window.innerHeight - viewport.height - viewport.offsetTop;
-			if (modal!.open && hiddenByKeyboard > 120) {
-				modal!.style.setProperty('--wa-kb-top', `${viewport.offsetTop}px`);
-				modal!.style.setProperty('--wa-kb-height', `${viewport.height}px`);
-				modal!.dataset.kb = 'open';
-			} else {
-				delete modal!.dataset.kb;
+		function syncViewport() {
+			if (!viewport || !modal!.open || !smallScreen.matches) {
+				delete modal!.dataset.pinned;
+				return;
 			}
+			modal!.style.setProperty('--wa-vv-top', `${viewport.offsetTop}px`);
+			modal!.style.setProperty('--wa-vv-height', `${viewport.height}px`);
+			modal!.dataset.pinned = '';
 		}
 
 		if (viewport) {
-			viewport.addEventListener('resize', syncKeyboard);
-			viewport.addEventListener('scroll', syncKeyboard);
+			viewport.addEventListener('resize', syncViewport);
+			viewport.addEventListener('scroll', syncViewport);
 		}
+		smallScreen.addEventListener('change', syncViewport);
 
 		form.addEventListener('focusin', (event) => {
 			const field = event.target;
 			if (!(field instanceof HTMLElement)) return;
 			// El teclado sube después del focus: esperamos a que el viewport se reacomode
 			window.setTimeout(() => {
-				syncKeyboard();
+				syncViewport();
 				field.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
 			}, 300);
 		});
 
-		form.addEventListener('focusout', () => window.setTimeout(syncKeyboard, 150));
-
 		skipBtn.addEventListener('click', () => send(false));
 		closeBtn.addEventListener('click', () => modal.close());
 		modal.addEventListener('close', () => {
-			delete modal.dataset.kb;
+			delete modal.dataset.pinned;
 			resetForm();
 			// En /cotizar no hay web detrás: cerrar debe llevar a algún lado
 			if (autoOpen && !leaving) window.location.href = '/';
@@ -924,6 +924,7 @@ const mapConfig = {
 			currentBaseMessage = message;
 			resetForm();
 			modal!.showModal();
+			syncViewport();
 		}
 
 		document.querySelectorAll<HTMLAnchorElement>('a[data-whatsapp]').forEach((link) => {
