@@ -1,0 +1,578 @@
+---
+interface Props {
+	defaultMessage?: string;
+	locations?: string[];
+}
+
+const {
+	defaultMessage = "Buen día. Me interesa conocer más sobre los costos de la presentación de mariachi para un evento.",
+	locations = ['Ambato centro', 'Pelileo centro', 'Baños centro', 'Patate centro', 'Píllaro centro'],
+} = Astro.props;
+
+// Ambato, y los límites del Ecuador continental para que el mapa no se salga del país
+const mapConfig = {
+	center: [-1.2491, -78.6167],
+	zoom: 13,
+	minZoom: 6,
+	bounds: [[-5.1, -81.2], [1.6, -75.0]],
+};
+---
+
+<dialog id="whatsapp-modal" class="wa-modal" aria-labelledby="wa-modal-title" data-default-message={defaultMessage}>
+	<form class="wa-modal-form" id="wa-modal-form" novalidate>
+		<button type="button" class="wa-modal-close" id="wa-modal-close" aria-label="Cerrar">&times;</button>
+
+		<div class="wa-modal-header">
+			<svg class="wa-modal-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+				<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+			</svg>
+			<h2 class="wa-modal-title" id="wa-modal-title">Cuéntanos de tu evento</h2>
+			<p class="wa-modal-subtitle">Todos los campos son opcionales. Si los llenas, los incluimos en tu mensaje.</p>
+		</div>
+
+		<div class="wa-field">
+			<label for="wa-date">Fecha del evento</label>
+			<input type="date" id="wa-date" name="date" />
+		</div>
+
+		<div class="wa-field">
+			<label for="wa-time">Hora</label>
+			<input type="time" id="wa-time" name="time" />
+		</div>
+
+		<div class="wa-field">
+			<label for="wa-location">Ubicación</label>
+			<select id="wa-location" name="location">
+				<option value="">Selecciona una opción</option>
+				{locations.map((place) => <option value={place}>{place}</option>)}
+				<option value="Afueras de la ciudad de Ambato" data-detalle="¿Qué sector o vía?" data-placeholder="Ej.: vía a Guaranda, sector Huachi Grande">Afueras de la ciudad de Ambato</option>
+				<option value="__otro__" data-detalle="¿Dónde será?" data-placeholder="Ciudad, parroquia o dirección">Otro</option>
+			</select>
+		</div>
+
+		<div class="wa-field" id="wa-location-other-field" hidden>
+			<label for="wa-location-other" id="wa-location-other-label">¿Dónde será?</label>
+			<input type="text" id="wa-location-other" name="locationOther" placeholder="Ciudad, parroquia o dirección" autocomplete="off" />
+		</div>
+
+		<p class="wa-hint">Mientras más precisa sea la dirección, más exacta será la cotización: el precio incluye transporte.</p>
+
+		<div class="wa-field wa-map-field">
+			<button type="button" class="wa-map-toggle" id="wa-map-toggle" aria-expanded="false" aria-controls="wa-map-panel">
+				Elegir punto en el mapa
+			</button>
+
+			<div class="wa-map-panel" id="wa-map-panel" hidden data-map={JSON.stringify(mapConfig)}>
+				<p class="wa-map-help" id="wa-map-help">Toca el mapa para marcar el lugar exacto del evento.</p>
+				<div class="wa-map" id="wa-map"></div>
+				<div class="wa-map-actions">
+					<button type="button" class="wa-map-link" id="wa-map-locate">Usar mi ubicación actual</button>
+					<button type="button" class="wa-map-link" id="wa-map-clear" hidden>Quitar el punto</button>
+				</div>
+			</div>
+		</div>
+
+		<div class="wa-modal-actions">
+			<button type="submit" class="wa-btn wa-btn--send">Enviar por WhatsApp</button>
+			<button type="button" class="wa-btn wa-btn--skip" id="wa-modal-skip">Omitir</button>
+		</div>
+	</form>
+</dialog>
+
+<style>
+	.wa-modal {
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 4px;
+		padding: 0;
+		/* El reset global anula el margin:auto nativo del <dialog>, que es lo que lo centra */
+		margin: auto;
+		max-height: calc(100dvh - 2rem);
+		overflow: auto;
+		width: min(460px, calc(100vw - 2rem));
+		background: var(--papel-alto, #F5F6F1);
+		color: var(--texto, #33302B);
+		box-shadow: 0 30px 70px rgba(23, 19, 15, 0.4);
+		font-family: var(--lectura, Georgia, serif);
+	}
+
+	.wa-modal::backdrop {
+		background: rgba(23, 19, 15, 0.72);
+		backdrop-filter: blur(3px);
+	}
+
+	.wa-modal-form {
+		position: relative;
+		padding: 2.5rem 2rem 2rem 2rem;
+	}
+
+	.wa-modal-close {
+		position: absolute;
+		top: 0.5rem;
+		right: 0.85rem;
+		background: none;
+		border: none;
+		font-size: 2rem;
+		line-height: 1;
+		color: var(--texto-tenue, #6B6760);
+		cursor: pointer;
+		padding: 0;
+		transition: color 0.2s ease;
+	}
+
+	.wa-modal-close:hover {
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-modal-header {
+		margin-bottom: 1.75rem;
+	}
+
+	.wa-modal-icon {
+		width: 34px;
+		height: 34px;
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-modal-title {
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 1.7rem;
+		font-weight: 800;
+		line-height: 1.04;
+		letter-spacing: -0.015em;
+		margin: 0.65rem 0 0.5rem 0;
+		color: var(--tinta, #17130F);
+	}
+
+	.wa-modal-subtitle {
+		font-size: 0.98rem;
+		color: var(--texto-tenue, #6B6760);
+		margin: 0;
+		line-height: 1.5;
+	}
+
+	.wa-field {
+		margin-bottom: 1.1rem;
+	}
+
+	.wa-field label {
+		display: block;
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.78rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--texto, #33302B);
+		margin-bottom: 0.45rem;
+	}
+
+	.wa-field input,
+	.wa-field select {
+		width: 100%;
+		padding: 0.8rem 0.9rem;
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 3px;
+		font-size: 1rem;
+		font-family: inherit;
+		color: var(--texto, #33302B);
+		background: var(--papel, #ECEEE6);
+		transition: border-color 0.2s ease;
+		box-sizing: border-box;
+	}
+
+	.wa-field input:focus,
+	.wa-field select:focus {
+		outline: none;
+		border-color: var(--mono, #E85D24);
+		box-shadow: inset 0 0 0 1px var(--mono, #E85D24);
+	}
+
+	.wa-hint {
+		margin: -0.35rem 0 0 0;
+		font-size: 0.88rem;
+		line-height: 1.5;
+		color: var(--texto-tenue, #6B6760);
+		border-left: 2px solid var(--mono, #E85D24);
+		padding-left: 0.75rem;
+	}
+
+	.wa-map-field {
+		margin-top: 1.35rem;
+	}
+
+	.wa-map-toggle {
+		width: 100%;
+		padding: 0.8rem 0.9rem;
+		background: transparent;
+		border: 1px dashed var(--linea, rgba(23, 19, 15, 0.14));
+		border-radius: 3px;
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--texto-tenue, #6B6760);
+		cursor: pointer;
+		transition: border-color 0.2s ease, color 0.2s ease;
+	}
+
+	.wa-map-toggle:hover,
+	.wa-map-toggle[aria-expanded='true'] {
+		border-color: var(--mono, #E85D24);
+		color: var(--mono, #E85D24);
+	}
+
+	.wa-map-panel {
+		margin-top: 0.85rem;
+	}
+
+	.wa-map-help {
+		font-size: 0.85rem;
+		line-height: 1.45;
+		color: var(--texto-tenue, #6B6760);
+		margin: 0 0 0.6rem 0;
+	}
+
+	.wa-map {
+		height: 240px;
+		border: 1px solid var(--linea, rgba(23, 19, 15, 0.14));
+		background: var(--papel, #ECEEE6);
+	}
+
+	.wa-map-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin-top: 0.6rem;
+	}
+
+	.wa-map-link {
+		background: none;
+		border: none;
+		padding: 0;
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: var(--mono, #E85D24);
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 3px;
+	}
+
+	.wa-map-link:hover {
+		color: var(--mono-hondo, #C2481A);
+	}
+
+	.wa-map-link:disabled {
+		color: var(--texto-tenue, #6B6760);
+		cursor: default;
+		text-decoration: none;
+	}
+
+	.wa-modal-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 0.65rem;
+		margin-top: 1.75rem;
+	}
+
+	.wa-btn {
+		width: 100%;
+		padding: 0.95rem 1rem;
+		border: 1px solid transparent;
+		border-radius: 3px;
+		font-family: var(--display, Arial, sans-serif);
+		font-size: 0.82rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		cursor: pointer;
+		transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+	}
+
+	.wa-btn--send {
+		background: var(--mono, #E85D24);
+		color: var(--papel-alto, #F5F6F1);
+	}
+
+	.wa-btn--send:hover {
+		background: var(--mono-hondo, #C2481A);
+	}
+
+	.wa-btn--skip {
+		background: transparent;
+		color: var(--texto-tenue, #6B6760);
+		border-color: var(--linea, rgba(23, 19, 15, 0.14));
+	}
+
+	.wa-btn--skip:hover {
+		border-color: var(--tinta, #17130F);
+		color: var(--tinta, #17130F);
+	}
+
+	@media (max-width: 480px) {
+		.wa-modal-form {
+			padding: 2.5rem 1.25rem 1.5rem 1.25rem;
+		}
+
+		.wa-modal-title {
+			font-size: 1.45rem;
+		}
+	}
+</style>
+
+<script>
+	const modal = document.getElementById('whatsapp-modal') as HTMLDialogElement | null;
+
+	if (modal) {
+		const form = document.getElementById('wa-modal-form') as HTMLFormElement;
+		const dateInput = document.getElementById('wa-date') as HTMLInputElement;
+		const timeInput = document.getElementById('wa-time') as HTMLInputElement;
+		const locationSelect = document.getElementById('wa-location') as HTMLSelectElement;
+		const otherField = document.getElementById('wa-location-other-field') as HTMLDivElement;
+		const otherInput = document.getElementById('wa-location-other') as HTMLInputElement;
+		const otherLabel = document.getElementById('wa-location-other-label') as HTMLLabelElement;
+		const closeBtn = document.getElementById('wa-modal-close') as HTMLButtonElement;
+		const skipBtn = document.getElementById('wa-modal-skip') as HTMLButtonElement;
+		const mapToggle = document.getElementById('wa-map-toggle') as HTMLButtonElement;
+		const mapPanel = document.getElementById('wa-map-panel') as HTMLDivElement;
+		const mapEl = document.getElementById('wa-map') as HTMLDivElement;
+		const mapHelp = document.getElementById('wa-map-help') as HTMLParagraphElement;
+		const locateBtn = document.getElementById('wa-map-locate') as HTMLButtonElement;
+		const clearBtn = document.getElementById('wa-map-clear') as HTMLButtonElement;
+
+		const defaultMessage = modal.dataset.defaultMessage || '';
+		const mapConfig = JSON.parse(mapPanel.dataset.map || '{}');
+		const helpText = mapHelp.textContent || '';
+
+		let currentNumber = '';
+		let currentBaseMessage = defaultMessage;
+		let picked: { lat: number; lng: number } | null = null;
+		let map: any = null;
+		let marker: any = null;
+		let loadingMap = false;
+
+		function formatDate(value: string): string {
+			const parsed = new Date(`${value}T00:00:00`);
+			if (Number.isNaN(parsed.getTime())) return value;
+			return parsed.toLocaleDateString('es-EC', {
+				weekday: 'long',
+				day: 'numeric',
+				month: 'long',
+				year: 'numeric',
+			});
+		}
+
+		function selectedOption(): HTMLOptionElement | null {
+			return locationSelect.selectedOptions[0] || null;
+		}
+
+		function selectedLocation(): string {
+			const option = selectedOption();
+			const needsDetail = Boolean(option?.dataset.detalle);
+			const detail = otherInput.value.trim();
+
+			if (!needsDetail) return locationSelect.value;
+			// "Otro" es solo el texto libre; el resto antepone la zona elegida
+			if (locationSelect.value === '__otro__') return detail;
+			if (!detail) return locationSelect.value;
+			return `${locationSelect.value} — ${detail}`;
+		}
+
+		function buildMessage(includeDetails: boolean): string {
+			if (!includeDetails) return currentBaseMessage;
+
+			const extras: string[] = [];
+			if (dateInput.value) extras.push(`Fecha: ${formatDate(dateInput.value)}`);
+			if (timeInput.value) extras.push(`Hora: ${timeInput.value}`);
+			const place = selectedLocation();
+			if (place) extras.push(`Ubicación: ${place}`);
+			if (picked) extras.push(`Punto en el mapa: ${mapsLink(picked)}`);
+
+			if (extras.length === 0) return currentBaseMessage;
+			return `${currentBaseMessage}\n\n${extras.join('\n')}`;
+		}
+
+		function send(includeDetails: boolean) {
+			const url = `https://wa.me/${currentNumber}?text=${encodeURIComponent(buildMessage(includeDetails))}`;
+			modal!.close();
+			window.open(url, '_blank', 'noopener');
+		}
+
+		function mapsLink(point: { lat: number; lng: number }): string {
+			return `https://maps.google.com/?q=${point.lat.toFixed(6)},${point.lng.toFixed(6)}`;
+		}
+
+		function setPoint(lat: number, lng: number, L: any) {
+			picked = { lat, lng };
+			if (marker) {
+				marker.setLatLng([lat, lng]);
+			} else {
+				marker = L.circleMarker([lat, lng], {
+					radius: 9,
+					color: '#ffffff',
+					weight: 3,
+					fillColor: '#E85D24',
+					fillOpacity: 1,
+				}).addTo(map);
+			}
+			clearBtn.hidden = false;
+			mapHelp.textContent = 'Punto marcado. Toca otro lugar del mapa para corregirlo.';
+		}
+
+		function clearPoint() {
+			picked = null;
+			if (marker) {
+				marker.remove();
+				marker = null;
+			}
+			clearBtn.hidden = true;
+			mapHelp.textContent = helpText;
+		}
+
+		function loadStylesheet(href: string): Promise<void> {
+			return new Promise((resolve, reject) => {
+				if (document.querySelector(`link[href="${href}"]`)) {
+					resolve();
+					return;
+				}
+				const link = document.createElement('link');
+				link.rel = 'stylesheet';
+				link.href = href;
+				link.addEventListener('load', () => resolve());
+				link.addEventListener('error', () => reject(new Error('No se pudo cargar el mapa')));
+				document.head.appendChild(link);
+			});
+		}
+
+		async function ensureMap() {
+			if (map || loadingMap) return;
+			loadingMap = true;
+
+			try {
+				// Se carga solo cuando alguien abre el mapa, para no pesar en el resto de la página.
+				// Con `?url` la hoja no se inyecta en el <head> del build: la insertamos aquí.
+				const cssUrl = (await import('leaflet/dist/leaflet.css?url')).default;
+				await loadStylesheet(cssUrl);
+				const L = (await import('leaflet')).default;
+
+				map = L.map(mapEl, {
+					center: mapConfig.center,
+					zoom: mapConfig.zoom,
+					minZoom: mapConfig.minZoom,
+					maxBounds: mapConfig.bounds,
+					maxBoundsViscosity: 1,
+					scrollWheelZoom: false,
+				});
+
+				L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+					maxZoom: 19,
+					attribution: '&copy; colaboradores de OpenStreetMap',
+				}).addTo(map);
+
+				map.on('click', (event: any) => setPoint(event.latlng.lat, event.latlng.lng, L));
+
+				locateBtn.addEventListener('click', () => {
+					if (!navigator.geolocation) {
+						mapHelp.textContent = 'Tu navegador no permite compartir la ubicación. Marca el punto tocando el mapa.';
+						return;
+					}
+
+					locateBtn.disabled = true;
+					mapHelp.textContent = 'Buscando tu ubicación…';
+
+					navigator.geolocation.getCurrentPosition(
+						(position) => {
+							locateBtn.disabled = false;
+							const { latitude, longitude } = position.coords;
+							map.setView([latitude, longitude], 16);
+							setPoint(latitude, longitude, L);
+						},
+						() => {
+							locateBtn.disabled = false;
+							mapHelp.textContent = 'No pudimos obtener tu ubicación. Marca el punto tocando el mapa.';
+						},
+						{ enableHighAccuracy: true, timeout: 10000 }
+					);
+				});
+			} catch {
+				mapPanel.hidden = true;
+				mapToggle.disabled = true;
+				mapToggle.textContent = 'El mapa no está disponible en este momento';
+			} finally {
+				loadingMap = false;
+			}
+		}
+
+		function closeMapPanel() {
+			mapPanel.hidden = true;
+			mapToggle.setAttribute('aria-expanded', 'false');
+			mapToggle.textContent = picked ? 'Ver el punto marcado en el mapa' : 'Elegir punto en el mapa';
+		}
+
+		mapToggle.addEventListener('click', async () => {
+			if (!mapPanel.hidden) {
+				closeMapPanel();
+				return;
+			}
+
+			mapPanel.hidden = false;
+			mapToggle.setAttribute('aria-expanded', 'true');
+			mapToggle.textContent = 'Ocultar el mapa';
+			await ensureMap();
+			// El contenedor estaba oculto, así que Leaflet necesita volver a medirlo
+			map?.invalidateSize();
+		});
+
+		clearBtn.addEventListener('click', clearPoint);
+
+		function resetForm() {
+			form.reset();
+			otherField.hidden = true;
+			clearPoint();
+			closeMapPanel();
+		}
+
+		locationSelect.addEventListener('change', () => {
+			const option = selectedOption();
+			const detalle = option?.dataset.detalle;
+			otherField.hidden = !detalle;
+			if (!detalle) return;
+
+			otherLabel.textContent = detalle;
+			otherInput.placeholder = option?.dataset.placeholder || '';
+			otherInput.value = '';
+			otherInput.focus();
+		});
+
+		form.addEventListener('submit', (event) => {
+			event.preventDefault();
+			send(true);
+		});
+
+		skipBtn.addEventListener('click', () => send(false));
+		closeBtn.addEventListener('click', () => modal.close());
+		modal.addEventListener('close', resetForm);
+
+		modal.addEventListener('click', (event) => {
+			if (event.target === modal) modal.close();
+		});
+
+		document.querySelectorAll<HTMLAnchorElement>('a[data-whatsapp]').forEach((link) => {
+			link.addEventListener('click', (event) => {
+				let parsed: URL;
+				try {
+					parsed = new URL(link.href);
+				} catch {
+					return;
+				}
+
+				const number = parsed.pathname.replace(/\D/g, '');
+				if (!number) return;
+
+				event.preventDefault();
+				currentNumber = number;
+				currentBaseMessage = (parsed.searchParams.get('text') || defaultMessage).trim();
+				resetForm();
+				modal.showModal();
+			});
+		});
+	}
+</script>

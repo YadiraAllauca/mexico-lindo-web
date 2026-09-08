@@ -1,22 +1,205 @@
+---
+import Navigation from '../components/Navigation.astro';
+import WhatsAppModal from '../components/WhatsAppModal.astro';
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<meta name="description" content="Mariachi México Lindo - Música tradicional mexicana para tus mejores momentos" />
+		<meta name="theme-color" content="#17130F" />
+		<title>Mariachi México Lindo - Música Tradicional Mexicana</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Source+Serif+4:ital,opsz,wght@0,8..60,300..700;1,8..60,400&display=swap" rel="stylesheet">
 	</head>
 	<body>
-		<slot />
+		<Navigation />
+		<main class="main-content">
+			<slot />
+		</main>
+		<footer class="site-footer">
+			<span class="greca-band" aria-hidden="true"></span>
+			<div class="wrap site-footer-inner">
+				<span class="site-footer-name">Mariachi México Lindo</span>
+				<span class="site-footer-note">Música mexicana para tus mejores momentos</span>
+			</div>
+		</footer>
+		<WhatsAppModal />
 	</body>
 </html>
 
-<style>
-	html,
-	body {
+<style is:global>
+	:root {
+		/* Tomados de la foto del grupo y del logotipo */
+		--tinta: #17130F;        /* lana del traje de charro */
+		--tinta-alta: #241E18;   /* superficie oscura elevada */
+		--sierra: #2E3D2F;       /* verde profundo de la sierra */
+		--papel: #ECEEE6;        /* papel verdoso, no crema */
+		--papel-alto: #F5F6F1;
+		--mono: #E85D24;         /* naranja del moño */
+		--mono-hondo: #C2481A;
+		--plata: #B4B1A6;        /* botonadura */
+		--texto: #33302B;
+		--texto-tenue: #6B6760;
+		--linea: rgba(23, 19, 15, 0.14);
+		--linea-clara: rgba(236, 238, 230, 0.18);
+
+		--display: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+		--lectura: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+
+		--barra: 68px;
+		--seccion: clamp(5rem, 9vw, 8.5rem);
+
+		/* La greca del ala del sombrero, del propio logotipo */
+		--greca: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='27' viewBox='0 0 42 27'%3E%3Cpath d='M1.5 25.5V1.5h36v18H7.5v-12h24v6h-12' fill='none' stroke='%23000' stroke-width='3'/%3E%3C/svg%3E");
+		--greca-luz: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='27' viewBox='0 0 42 27'%3E%3Cpath d='M1.5 25.5V1.5h36v18H7.5v-12h24v6h-12' fill='none' stroke='%23ECEEE6' stroke-opacity='.09' stroke-width='3'/%3E%3C/svg%3E");
+	}
+
+	*,
+	*::before,
+	*::after {
 		margin: 0;
+		padding: 0;
+		box-sizing: border-box;
+	}
+
+	html {
+		scroll-behavior: smooth;
+		scroll-padding-top: var(--barra);
+		-webkit-text-size-adjust: 100%;
+	}
+
+	body {
 		width: 100%;
-		height: 100%;
+		min-height: 100vh;
+		font-family: var(--lectura);
+		font-optical-sizing: auto;
+		font-size: 1.0625rem;
+		line-height: 1.7;
+		background: var(--papel);
+		color: var(--texto);
+		overflow-x: hidden;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	h1, h2, h3, h4, h5, h6 {
+		font-family: var(--display);
+		font-weight: 800;
+		font-variation-settings: 'wdth' 112;
+		line-height: 1.04;
+		letter-spacing: -0.015em;
+		text-wrap: balance;
+	}
+
+	a { color: inherit; }
+
+	:where(a, button, input, textarea, [tabindex]):focus-visible {
+		outline: 3px solid var(--mono);
+		outline-offset: 3px;
+	}
+
+	img { display: block; max-width: 100%; }
+
+	.main-content {
+		width: 100%;
+	}
+
+	/* Contenedor común */
+	.wrap {
+		width: min(1120px, 100% - 3rem);
+		margin-inline: auto;
+	}
+
+	/* Encabezado de sección compartido */
+	.section-head {
+		max-width: 34ch;
+		margin-bottom: clamp(2.5rem, 5vw, 4rem);
+	}
+
+	.section-title {
+		font-size: clamp(2.1rem, 1.2rem + 3.2vw, 3.6rem);
+		margin: 0;
+	}
+
+	.section-lead {
+		margin-top: 1rem;
+		font-size: 1.15rem;
+		color: var(--texto-tenue);
+		max-width: 46ch;
+	}
+
+	/* La greca como divisor estructural, en lugar de subrayados en degradado */
+	.greca-rule {
+		display: block;
+		height: 22px;
+		width: 200px;
+		margin-top: 1.5rem;
+		background-color: var(--mono);
+		-webkit-mask-image: var(--greca);
+		mask-image: var(--greca);
+		-webkit-mask-repeat: repeat-x;
+		mask-repeat: repeat-x;
+		-webkit-mask-size: auto 22px;
+		mask-size: auto 22px;
+	}
+
+	.site-footer {
+		position: relative;
+		background: var(--tinta);
+		color: rgba(236, 238, 230, 0.7);
+		padding-block: clamp(2.5rem, 5vw, 3.5rem);
+	}
+
+	.greca-band {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: 22px;
+		background-color: var(--mono);
+		-webkit-mask-image: var(--greca);
+		mask-image: var(--greca);
+		-webkit-mask-repeat: repeat-x;
+		mask-repeat: repeat-x;
+		-webkit-mask-size: auto 22px;
+		mask-size: auto 22px;
+		opacity: 0.4;
+	}
+
+	.site-footer-inner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.5rem 2rem;
+		padding-top: 1.25rem;
+	}
+
+	.site-footer-name {
+		font-family: var(--display);
+		font-weight: 800;
+		font-variation-settings: 'wdth' 116;
+		font-size: 1.05rem;
+		color: var(--papel-alto);
+	}
+
+	.site-footer-note {
+		font-size: 0.98rem;
+	}
+
+	@media (max-width: 768px) {
+		.wrap { width: min(1120px, 100% - 2.5rem); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html { scroll-behavior: auto; }
+		*, *::before, *::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+		}
 	}
 </style>

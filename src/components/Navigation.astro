@@ -1,0 +1,171 @@
+---
+const links = [
+	{ id: 'inicio', label: 'Inicio' },
+	{ id: 'galeria', label: 'Galería' },
+	{ id: 'contacto', label: 'Contáctanos' },
+];
+---
+
+<nav class="navigation" aria-label="Navegación principal">
+	<div class="nav-inner">
+		<a href="#inicio" class="nav-brand">México Lindo</a>
+		<ul class="nav-menu">
+			{links.map((link) => (
+				<li>
+					<a href={`#${link.id}`} class="nav-link" data-section={link.id}>{link.label}</a>
+				</li>
+			))}
+		</ul>
+	</div>
+</nav>
+
+<style>
+	.navigation {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 1000;
+		height: var(--barra);
+		background: transparent;
+		transition: background-color 0.25s ease, border-color 0.25s ease;
+		border-bottom: 1px solid transparent;
+	}
+
+	.navigation.is-scrolled {
+		background: rgba(23, 19, 15, 0.94);
+		backdrop-filter: saturate(140%) blur(8px);
+		border-bottom-color: var(--linea-clara);
+	}
+
+	.nav-inner {
+		height: 100%;
+		width: min(1120px, 100% - 3rem);
+		margin-inline: auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 2rem;
+	}
+
+	.nav-brand {
+		font-family: var(--display);
+		font-weight: 800;
+		font-variation-settings: 'wdth' 118;
+		font-size: 1rem;
+		letter-spacing: 0.01em;
+		color: var(--papel);
+		text-decoration: none;
+		white-space: nowrap;
+		text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+	}
+
+	.nav-menu {
+		list-style: none;
+		display: flex;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.nav-link {
+		display: block;
+		font-family: var(--display);
+		font-weight: 500;
+		font-size: 0.95rem;
+		color: rgba(236, 238, 230, 0.82);
+		text-decoration: none;
+		padding: 0.5rem 0.85rem;
+		position: relative;
+		transition: color 0.2s ease;
+		text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+	}
+
+	.nav-link::after {
+		content: '';
+		position: absolute;
+		left: 0.85rem;
+		right: 0.85rem;
+		bottom: 0.15rem;
+		height: 2px;
+		background: var(--mono);
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform 0.2s ease;
+	}
+
+	.nav-link:hover,
+	.nav-link.active {
+		color: var(--papel);
+	}
+
+	.nav-link:hover::after,
+	.nav-link.active::after {
+		transform: scaleX(1);
+	}
+
+	@media (max-width: 720px) {
+		.nav-inner {
+			width: min(1120px, 100% - 2rem);
+			gap: 0.75rem;
+		}
+
+		.nav-brand {
+			font-size: 0.9rem;
+		}
+
+		.nav-menu {
+			gap: 0;
+		}
+
+		.nav-link {
+			font-size: 0.8rem;
+			padding: 0.5rem 0.4rem;
+		}
+
+		.nav-link::after {
+			left: 0.4rem;
+			right: 0.4rem;
+		}
+	}
+
+	@media (max-width: 400px) {
+		.nav-brand { display: none; }
+		.nav-inner { justify-content: center; }
+	}
+</style>
+
+<script>
+	const sectionIds = ['inicio', 'galeria', 'contacto'];
+	const nav = document.querySelector('.navigation');
+
+	function setActiveNav() {
+		const y = window.scrollY + window.innerHeight * 0.35;
+		let activeId = sectionIds[0];
+
+		for (const id of sectionIds) {
+			const section = document.getElementById(id);
+			if (!section) continue;
+			const rect = section.getBoundingClientRect();
+			const top = rect.top + window.scrollY;
+			const bottom = top + rect.height;
+			if (y >= top && y < bottom) {
+				activeId = id;
+				break;
+			}
+		}
+
+		document.querySelectorAll('.nav-link').forEach((link) => {
+			link.classList.toggle('active', link.getAttribute('data-section') === activeId);
+		});
+
+		nav?.classList.toggle('is-scrolled', window.scrollY > 24);
+	}
+
+	function onScroll() {
+		requestAnimationFrame(setActiveNav);
+	}
+
+	setActiveNav();
+	window.addEventListener('scroll', onScroll, { passive: true });
+	window.addEventListener('resize', onScroll);
+</script>

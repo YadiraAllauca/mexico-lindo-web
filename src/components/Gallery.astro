@@ -1,0 +1,352 @@
+---
+const videos = [
+	{ id: "clip1", alt: "Mariachi en evento", width: 720, height: 720 },
+	{ id: "clip2", alt: "Presentación en boda", width: 720, height: 1280 },
+	{ id: "clip3", alt: "Serenata nocturna", width: 716, height: 1276 },
+	{ id: "clip4", alt: "Concierto al aire libre", width: 1280, height: 720 },
+	{ id: "clip5", alt: "Celebración familiar", width: 1280, height: 720 },
+	{ id: "clip6", alt: "Fiesta tradicional", width: 720, height: 900 },
+];
+---
+
+<section id="galeria" class="gallery">
+	<div class="gallery-container">
+		<div class="section-header">
+			<h2 class="section-title">Galería</h2>
+			<div class="title-underline"></div>
+		</div>
+		<div class="gallery-grid">
+			{videos.map((video) => (
+				<article class="gallery-item" style={`aspect-ratio: ${video.width} / ${video.height};`}>
+					<video
+						class="gallery-video"
+						src={`/videos/${video.id}.mp4`}
+						poster={`/gallery/${video.id}.webp`}
+						preload="none"
+						playsinline
+						aria-label={video.alt}
+					></video>
+
+					<button class="play-button" type="button" aria-label={`Reproducir: ${video.alt}`}>
+						<span class="play-icon">
+							<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M8 5.5v13l11-6.5z" />
+							</svg>
+						</span>
+					</button>
+
+					<a
+						class="download-button"
+						href={`/videos/${video.id}.mp4`}
+						download={`mexico-lindo-${video.id}.mp4`}
+						aria-label={`Descargar: ${video.alt}`}
+						title="Descargar video"
+					>
+						<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+							<path d="M12 3v11m0 0l-4-4m4 4l4-4M5 19h14" />
+						</svg>
+					</a>
+				</article>
+			))}
+		</div>
+	</div>
+</section>
+
+<script>
+	const items = document.querySelectorAll<HTMLElement>("#galeria .gallery-item");
+
+	items.forEach((item) => {
+		const video = item.querySelector<HTMLVideoElement>(".gallery-video");
+		const playButton = item.querySelector<HTMLButtonElement>(".play-button");
+		if (!video || !playButton) return;
+
+		const start = () => {
+			// Solo un video reproduciéndose a la vez.
+			items.forEach((other) => {
+				if (other === item) return;
+				const otherVideo = other.querySelector<HTMLVideoElement>(".gallery-video");
+				if (otherVideo && !otherVideo.paused) otherVideo.pause();
+			});
+
+			video.controls = true;
+			item.classList.add("is-playing");
+			video.play().catch(() => {
+				// Si el navegador bloquea la reproducción, devolvemos el póster.
+				video.controls = false;
+				item.classList.remove("is-playing");
+			});
+		};
+
+		playButton.addEventListener("click", start);
+
+		video.addEventListener("ended", () => {
+			video.controls = false;
+			video.currentTime = 0;
+			item.classList.remove("is-playing");
+		});
+	});
+</script>
+
+<style>
+	.gallery {
+		min-height: 100vh;
+		background: linear-gradient(180deg, #000000 0%, #1a1a1a 100%);
+		padding: 6rem 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.gallery-container {
+		max-width: 1400px;
+		width: 100%;
+	}
+
+	.section-header {
+		text-align: center;
+		margin-bottom: 4rem;
+	}
+
+	.section-title {
+		font-size: 3rem;
+		color: #ffffff;
+		margin: 0 0 1rem 0;
+		text-transform: uppercase;
+		letter-spacing: 3px;
+		position: relative;
+		display: inline-block;
+	}
+
+	.title-underline {
+		width: 100px;
+		height: 4px;
+		background: linear-gradient(90deg, #e3744c, #D4AF37);
+		margin: 1rem auto;
+		position: relative;
+	}
+
+	.title-underline::before,
+	.title-underline::after {
+		content: '♪';
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		color: #e3744c;
+		font-size: 1.2rem;
+	}
+
+	.title-underline::before {
+		left: -30px;
+	}
+
+	.title-underline::after {
+		right: -30px;
+	}
+
+	/* Masonry con multi-columna: cada clip conserva su proporción real. */
+	.gallery-grid {
+		columns: 3;
+		column-gap: 2rem;
+	}
+
+	.gallery-item {
+		position: relative;
+		break-inside: avoid;
+		margin-bottom: 2rem;
+		overflow: hidden;
+		border-radius: 10px;
+		background: #000000;
+		border: 2px solid transparent;
+		transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+	}
+
+	.gallery-item:hover,
+	.gallery-item:focus-within {
+		border-color: #e3744c;
+		transform: translateY(-4px);
+		box-shadow: 0 10px 40px rgba(227, 116, 76, 0.4);
+	}
+
+	.gallery-video {
+		display: block;
+		width: 100%;
+		height: 100%;
+		background: #000000;
+		/* `contain` y no `cover`: en la grilla se ven igual porque el contenedor
+		   ya tiene la proporción del clip, pero en pantalla completa el contenedor
+		   pasa a ser la pantalla y `cover` recortaría el encuadre. */
+		object-fit: contain;
+	}
+
+	/* En pantalla completa el clip manda: se ajusta entero sobre fondo negro. */
+	.gallery-video:fullscreen,
+	.gallery-video:-webkit-full-screen {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		background: #000000;
+	}
+
+	.gallery-video::backdrop {
+		background: #000000;
+	}
+
+	/* Capa de reproducción: cubre el clip hasta que se da play. */
+	.play-button {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+		background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.65) 100%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.gallery-item:hover .play-button,
+	.play-button:focus-visible {
+		opacity: 1;
+	}
+
+	.play-icon {
+		width: 72px;
+		height: 72px;
+		border-radius: 50%;
+		border: 2px solid #D4AF37;
+		background: rgba(0, 0, 0, 0.55);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transform: scale(0.7);
+		transition: transform 0.3s ease, background 0.3s ease;
+	}
+
+	.gallery-item:hover .play-icon,
+	.play-button:focus-visible .play-icon {
+		transform: scale(1);
+	}
+
+	.play-button:hover .play-icon {
+		background: rgba(227, 116, 76, 0.85);
+	}
+
+	.play-icon svg {
+		width: 34px;
+		height: 34px;
+		fill: #D4AF37;
+		transition: fill 0.3s ease;
+		/* Compensa el peso visual del triángulo. */
+		margin-left: 4px;
+	}
+
+	.play-button:hover .play-icon svg {
+		fill: #ffffff;
+	}
+
+	.download-button {
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		width: 42px;
+		height: 42px;
+		border-radius: 50%;
+		border: 1px solid rgba(212, 175, 55, 0.6);
+		background: rgba(0, 0, 0, 0.65);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		opacity: 0;
+		transition: opacity 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+	}
+
+	.gallery-item:hover .download-button,
+	.download-button:focus-visible {
+		opacity: 1;
+	}
+
+	.download-button:hover {
+		background: #e3744c;
+		border-color: #e3744c;
+	}
+
+	.download-button svg {
+		width: 20px;
+		height: 20px;
+		fill: none;
+		stroke: #D4AF37;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+		transition: stroke 0.3s ease;
+	}
+
+	.download-button:hover svg {
+		stroke: #ffffff;
+	}
+
+	/* Con el clip reproduciéndose, los controles nativos toman el mando. */
+	.gallery-item.is-playing .play-button {
+		display: none;
+	}
+
+	.gallery-item.is-playing .download-button {
+		opacity: 1;
+	}
+
+	/* En táctil no hay hover: los controles quedan siempre visibles. */
+	@media (hover: none) {
+		.play-button,
+		.download-button {
+			opacity: 1;
+		}
+
+		.play-icon {
+			transform: scale(1);
+		}
+	}
+
+	@media (max-width: 1024px) {
+		.gallery-grid {
+			columns: 2;
+		}
+	}
+
+	@media (max-width: 768px) {
+		.gallery {
+			padding: 4rem 1rem;
+		}
+
+		.section-title {
+			font-size: 2rem;
+		}
+
+		.gallery-grid {
+			columns: 1;
+			column-gap: 1.5rem;
+		}
+
+		.gallery-item {
+			margin-bottom: 1.5rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.gallery-item,
+		.play-button,
+		.play-icon,
+		.play-icon svg,
+		.download-button,
+		.download-button svg {
+			transition: none;
+		}
+
+		.gallery-item:hover,
+		.gallery-item:focus-within {
+			transform: none;
+		}
+	}
+</style>
