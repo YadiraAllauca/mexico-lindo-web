@@ -1,4 +1,5 @@
 ---
+import { renderSVG } from 'uqr';
 import { negocio } from '../data/negocio';
 
 interface Props {
@@ -15,6 +16,19 @@ const digits = whatsappNumber.replace(/\D/g, '');
 const whatsappUrl = `https://wa.me/${digits}?text=${encodeURIComponent(whatsappMessage)}`;
 const telHref = `tel:+${digits}`;
 const telLabel = negocio.telefonoVisible;
+
+// El QR apunta a /cotizar, no a wa.me: quien escanea pasa por el formulario y
+// nos escribe con la fecha y el lugar ya puestos, en vez de caer en un chat en
+// blanco. El dominio sale del despliegue, el mismo que usan el sitemap y Open
+// Graph, así que el QR nunca queda apuntando a una URL vieja.
+const cotizarUrl = new URL('/cotizar', Astro.site).href;
+const qrCotizar = renderSVG(cotizarUrl, {
+	// Dos módulos de margen: el resto de la zona tranquila la pone el recuadro
+	ecc: 'M',
+	border: 2,
+	blackColor: '#17130F',
+	whiteColor: 'transparent',
+});
 
 const inicioFecha = new Date(2009, 10, 1); // 1 de noviembre de 2009
 const hoy = new Date();
@@ -108,6 +122,14 @@ const social = [
 					<a href={telHref} class="contact-phone">{telLabel}</a>
 					<span class="contact-call-name">Sergio Allauca, director</span>
 				</p>
+
+				<div class="contact-qr">
+					<div class="contact-qr-code" set:html={qrCotizar} aria-hidden="true"></div>
+					<p class="contact-qr-text">
+						<span class="contact-qr-title">O escanea con tu celular</span>
+						Se abre el formulario, nos cuentas de tu evento y te respondemos por WhatsApp con el precio.
+					</p>
+				</div>
 			</div>
 
 			<div class="contact-social">
@@ -281,6 +303,55 @@ const social = [
 		font-size: 0.9rem;
 		font-weight: 600;
 		color: var(--texto-tenue);
+	}
+
+	/* Nadie escanea la pantalla del mismo teléfono que tiene en la mano: el QR
+	   aparece solo de tablet para arriba, donde sí sirve para saltar del
+	   escritorio al celular. En móvil el botón de arriba ya está a un toque. */
+	.contact-qr {
+		display: none;
+	}
+
+	.contact-qr-code {
+		flex-shrink: 0;
+		width: 148px;
+		height: 148px;
+		padding: 12px;
+		background: var(--papel-alto);
+		border: 1px solid var(--linea);
+	}
+
+	/* El SVG entra por set:html, fuera del alcance de los estilos con scope */
+	.contact-qr-code :global(svg) {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+
+	.contact-qr-text {
+		font-size: 0.95rem;
+		line-height: 1.55;
+		color: var(--texto-tenue);
+		max-width: 28ch;
+	}
+
+	.contact-qr-title {
+		display: block;
+		margin-bottom: 0.3rem;
+		font-family: var(--display);
+		font-weight: 600;
+		color: var(--tinta);
+	}
+
+	@media (min-width: 861px) {
+		.contact-qr {
+			display: flex;
+			align-items: center;
+			gap: 1.1rem;
+			margin-top: 1.75rem;
+			padding-top: 1.6rem;
+			border-top: 1px solid var(--linea);
+		}
 	}
 
 	.contact-social-title {
